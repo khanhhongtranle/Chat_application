@@ -1,5 +1,6 @@
 package Controllers;
 
+import Entities.Account;
 import Models.AccountModel;
 import Views.LoginView;
 
@@ -35,7 +36,11 @@ public class LoginController {
                 return;
             }
 
-            JOptionPane.showMessageDialog(view, "Logined");
+            Account account = AccountModel.select(view.getUsernameField());
+
+            //JOptionPane.showMessageDialog(view, "Logined");
+            ChatRoomController chatRoomController = new ChatRoomController(account);
+
             return;
         }
     }
