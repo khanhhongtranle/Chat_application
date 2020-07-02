@@ -1,5 +1,6 @@
 package Controllers;
 
+import Client.Client;
 import Entities.Account;
 import Models.AccountModel;
 import Views.LoginView;
@@ -11,10 +12,16 @@ import java.awt.event.ActionListener;
 public class LoginController {
     private LoginView view;
 
+    private final Client client;
+
     public LoginController(){
         view = new LoginView();
         view.loginButtonListener(new LoginListener());
         view.signUpButtonListener(new SignUpListener());
+
+
+        this.client = new Client("localhost", 7070);
+        client.connect();
     }
 
     public void setVisibleView(boolean b){
