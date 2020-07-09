@@ -1,5 +1,10 @@
 package Server;
 
+import Entities.Account;
+import Models.AccountModel;
+import Utils.ProtectPasswordUtil;
+import Views_ver2.ChatBox;
+import Views_ver2.ChatBoxView;
 import org.apache.commons.lang.StringUtils;
 import java.io.*;
 import java.net.Socket;
@@ -54,6 +59,10 @@ public class ServerWorker extends Thread{
                 else if (cmd.equalsIgnoreCase("leave")){
                     handleLeave(tokens);
                 }
+                else if (cmd.equalsIgnoreCase("open")){
+                    String[] tokensOpen = StringUtils.split(line,null,3);
+                    handleOpenChatBox(tokensOpen);
+                }
                 else{
                     String msg = "unknown " + cmd + "\n";
                     outputStream.write(msg.getBytes());
@@ -76,12 +85,14 @@ public class ServerWorker extends Thread{
                 if (worker.isMemberOfTopic(sendTo)){
                     String outMsg = "msg " + sendTo + ": " + login + " " + body + "\n";
                     worker.send(outMsg);
+                    worker.outputStream.write(outMsg.getBytes());
                 }
             }
             else{
                 if (sendTo.equalsIgnoreCase(worker.getLogin())){
                     String outMsg = "msg " + login + " " + body + "\n";
                     worker.send(outMsg);
+                    worker.outputStream.write(outMsg.getBytes());
                 }
             }
         }
@@ -92,10 +103,15 @@ public class ServerWorker extends Thread{
 
         String onlineMsg = "offline " + login + "\n";
         for (ServerWorker worker : workerList){
-            if (!login.equals(worker.getLogin()))
-            worker.send(onlineMsg);
+            if (!login.equals(worker.getLogin())) {
+                //worker.send(onlineMsg);
+                outputStream.write(onlineMsg.getBytes());
+            }
         }
+        System.out.println(onlineMsg);
         clientSocket.close();
+
+        server.removeWorker(this);
     }
 
     private void handleLogin(OutputStream outputStream, String[] tokens) throws IOException {
@@ -103,8 +119,15 @@ public class ServerWorker extends Thread{
             String login = tokens[1];
             String password = tokens[2];
 
-            if ((login.equals("guest") && password.equals("guest"))
-                || login.equals("jim") && password.equals("jim")) {
+            //check from database
+            boolean loginSuccess = (AccountModel.select(login,password) != null);
+
+            //kiem trang tai khoan do co phai dang duoc dang nhap boi thang khac
+            if (login.equals("jim") || login.equals("guest")){
+                loginSuccess = true;
+            }
+
+            if (loginSuccess) {
 
                 String msg = "ok login\n";
                 outputStream.write(msg.getBytes());
@@ -116,9 +139,11 @@ public class ServerWorker extends Thread{
                 // send current user all other online logins
                 for (ServerWorker worker : workerList){
                     if (worker.getLogin() != null){
-                        if (login.equals(worker.getLogin())){
+                        if (!login.equals(worker.getLogin())){
                             String msg2 = "online " + worker.getLogin() + "\n";
-                            send(msg2);
+                            //send(msg2);
+
+                            outputStream.write(msg2.getBytes());
                         }
                     }
                 }
@@ -127,7 +152,9 @@ public class ServerWorker extends Thread{
                 String onlineMsg = "online " + login + "\n";
                 for (ServerWorker worker : workerList){
                     if (!login.equals(worker.getLogin())){
-                        worker.send(onlineMsg);
+                        //worker.send(onlineMsg);
+
+                        worker.outputStream.write(onlineMsg.getBytes());
                     }
                 }
             }
@@ -149,6 +176,47 @@ public class ServerWorker extends Thread{
         if (tokens.length > 1){
             String topic = tokens[1];
             topicSet.remove(topic);
+        }
+    }
+
+    private void handleOpenChatBox(String[] tokens) throws IOException {
+        String sender = tokens[1];
+        String receiver = tokens[2];
+
+        List<ServerWorker> workerList = server.getWorkerList();
+
+        int isOnline = 0;
+        for(ServerWorker worker : workerList){
+            if (worker.getLogin().equalsIgnoreCase(sender)){
+                isOnline ++;
+            }
+            if (worker.getLogin().equalsIgnoreCase(receiver)){
+                isOnline ++;
+            }
+            if (isOnline == 2){
+                break;
+            }
+        }
+
+        if (isOnline != 2){
+            String msg = "open error\n";
+            outputStream.write(msg.getBytes());
+            return;
+        }
+
+        List<ChatBox> chatBoxViewList = ChatBoxView.listChatBox;
+
+        String receiver2 = sender;
+        String sender2 = receiver;
+
+        for (ChatBox cb : chatBoxViewList){
+            if (cb.getSender().equals(sender) && cb.getReceiver().equals(receiver)){
+                if (!cb.getSender().equals(sender2) && !cb.getReceiver().equals(receiver2)){
+                    String msg = "open " + sender2 + " " + receiver2 + "\n";
+                    outputStream.write(msg.getBytes());
+                    break;
+                }
+            }
         }
     }
 

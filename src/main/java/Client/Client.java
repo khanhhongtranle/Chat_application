@@ -18,6 +18,8 @@ public class Client {
     private ArrayList<UserStatusListener> userStatusListeners = new ArrayList<>();
     private ArrayList<MessageListener> messageListeners = new ArrayList<>();
 
+    private String username;
+
     public Client(String serverName, int serverPort){
         this.serverName = serverName;
         this.serverPort = serverPort;
@@ -43,6 +45,11 @@ public class Client {
             public void onMessage(String fromLogin, String msgBody) {
                 System.out.println("You got a message from " + fromLogin + " === > " + msgBody);
             }
+
+            @Override
+            public void openChatBox(String sender, String receive) {
+
+            }
         });
 
         if (!client.connect()){
@@ -64,24 +71,24 @@ public class Client {
         //client.logoff();
     }
 
-    private void msg(String sendTo , String msgBody) throws IOException {
+    public void msg(String sendTo , String msgBody) throws IOException {
         String cmd = "msg " + sendTo + " " + msgBody + "\n";
         serverOut.write(cmd.getBytes());
     }
 
-    private void addUserStatusListener(UserStatusListener listener) {
+    public void addUserStatusListener(UserStatusListener listener) {
         userStatusListeners.add(listener);
     }
 
-    private void removeUserStatusListener(UserStatusListener listener){
+    public void removeUserStatusListener(UserStatusListener listener){
         userStatusListeners.remove(listener);
     }
 
-    private void addMessageListener(MessageListener listener){
+    public void addMessageListener(MessageListener listener){
         messageListeners.add(listener);
     }
 
-    private void removeMessageListener(MessageListener listener){
+    public void removeMessageListener(MessageListener listener){
         messageListeners.remove(listener);
     }
 
@@ -101,7 +108,7 @@ public class Client {
         return false;
     }
 
-    private boolean login(String login, String password) throws IOException {
+    public boolean login(String login, String password) throws IOException {
         String cmd = "login " + login + " " + password + "\n";
         serverOut.write(cmd.getBytes());
 
@@ -110,6 +117,8 @@ public class Client {
 
         if (response.equalsIgnoreCase("ok login")){
             startMessageReader();
+            username = login;
+            //handleOnline(username);
             return true;
         }
         else{
@@ -117,12 +126,13 @@ public class Client {
         }
     }
 
-    private void logoff() throws IOException {
+    public void logoff() throws IOException {
         String cmd = "logoff\n";
+        //handleOffline(username);
         serverOut.write(cmd.getBytes());
     }
 
-    private void startMessageReader(){
+    public void startMessageReader(){
         Thread t = new Thread(){
             @Override
             public void run() {
@@ -132,7 +142,7 @@ public class Client {
         t.start();
     }
 
-    private void readMessageLoop(){
+    public void readMessageLoop(){
         try{
             String line;
             while ( (line = bufferedIn.readLine()) !=null){
@@ -149,6 +159,9 @@ public class Client {
                         String[] tokensMsg = StringUtils.split(line,null,3);
                         handleMessage(tokensMsg);
                     }
+                    else  if (cmd.equalsIgnoreCase("open")){
+                        handleOpenChatBox(line);
+                    }
                 }
             }
         } catch (IOException e) {
@@ -161,26 +174,55 @@ public class Client {
         }
     }
 
-    private void handleOnline(String[] tokens){
+    public void handleOnline(String[] tokens){
         String login = tokens[1];
         for (UserStatusListener listener : userStatusListeners){
             listener.online(login);
         }
     }
 
-    private void handleOffline(String[] tokens){
+    public void handleOffline(String[] tokens){
         String login = tokens[1];
         for (UserStatusListener listener : userStatusListeners){
             listener.offline(login);
         }
     }
 
-    private void handleMessage(String[] tokensMsg){
+    public void handleMessage(String[] tokensMsg){
         String login = tokensMsg[1];
         String msgBody = tokensMsg[2];
 
         for (MessageListener listener: messageListeners){
             listener.onMessage(login, msgBody);
         }
+    }
+
+    public boolean handleOpenChatBox(String line) throws IOException {
+        //open sender receiver
+        String[] tokensOpen = StringUtils.split(line,null,3);
+        String sender = tokensOpen[1];
+        String receiver = tokensOpen[2];
+
+        for (MessageListener listener: messageListeners){
+            listener.openChatBox(sender, receiver);
+        }
+
+        serverOut.write(line.getBytes());
+
+        String response = bufferedIn.readLine();
+        //System.out.println("Response line: " + response);
+        if (response.contains("open")){
+            for (MessageListener listener: messageListeners){
+                listener.openChatBox(receiver, sender);
+            }
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
+
+    public String getUsername(){
+        return username;
     }
 }

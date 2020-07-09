@@ -18,6 +18,8 @@ public class ChatRoomView extends JFrame {
     private JScrollPane scrollPane;
     private JButton exitButton;
 
+    DefaultListModel<String> listModel = new DefaultListModel<>();
+
     public ChatRoomView(Account account){
         // set up frame
         this.setTitle("Chat room");
@@ -38,10 +40,9 @@ public class ChatRoomView extends JFrame {
         //--button
         exitButton = new JButton("Exit");
         //--list
-        DefaultListModel<String> listModel = new DefaultListModel<>();
-        for(Account acc : Account.list){
+        /*for(Account acc : Account.list){
             listModel.addElement(acc.getAccountName());
-        }
+        }*/
         listUsers = new JList(listModel);
         listUsers.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         listUsers.setLayoutOrientation(JList.VERTICAL_WRAP);
@@ -78,5 +79,9 @@ public class ChatRoomView extends JFrame {
 
     public JList getListUser(){
         return listUsers;
+    }
+
+    public DefaultListModel<String> getListModel(){
+        return listModel;
     }
 }

@@ -8,6 +8,7 @@ import Views.LoginView;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 
 public class LoginController {
     private LoginView view;
@@ -38,16 +39,27 @@ public class LoginController {
                 return;
             }
 
-            if (AccountModel.select(view.getUsernameField(), view.getPasswordField()) == null){
+            /*if (AccountModel.select(view.getUsernameField(), view.getPasswordField()) == null){
                 JOptionPane.showMessageDialog(view, "The username or password is incorrect");
                 return;
+            }*/
+
+            try{
+                if (client.login(view.getUsernameField(), view.getPasswordField())){
+                    Account account = AccountModel.select(view.getUsernameField());
+
+                    //JOptionPane.showMessageDialog(view, "Logined");
+                    ChatRoomController chatRoomController = new ChatRoomController(client,account);
+                    chatRoomController.setVisibleView(true);
+
+                    view.dispose();
+                }
+                else{
+                    JOptionPane.showMessageDialog(view, "The username or password is incorrect");
+                }
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
             }
-
-            Account account = AccountModel.select(view.getUsernameField());
-
-            //JOptionPane.showMessageDialog(view, "Logined");
-            ChatRoomController chatRoomController = new ChatRoomController(account);
-
             return;
         }
     }
