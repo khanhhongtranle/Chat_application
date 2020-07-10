@@ -1,88 +1,84 @@
 package Views;
 
+import Client.Client;
+import Entities.Account;
+import Models.AccountModel;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class SignUpView extends JFrame {
-
-    private JPanel panel;
-    private JPanel subPanel;
-    private JLabel label;
-    private JLabel usernameLabel;
-    private JLabel passwordLabel;
-    private JLabel re_enterPassLabel;
-    private JTextField usernameField;
-    private JPasswordField passwordField;
-    private JPasswordField rePasswordField;
+public class SignUpView extends JFrame{
+    private JPanel panel1;
+    private JTextField textField1;
+    private JPasswordField passwordField1;
+    private JPasswordField passwordField2;
     private JButton submitButton;
 
+    //private final Client client;
+
     public SignUpView(){
-        //set up frame
+        //this.client = client1;
+        //client.connect();
+
         this.setTitle("Sign up");
         this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         this.setResizable(false);
-        this.setBounds(10,10,10,10);
 
-        //init components
-        //--panel
-        panel = new JPanel();
-        BoxLayout boxLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
-        panel.setLayout(boxLayout);
-        panel.setBorder(BorderFactory.createEmptyBorder(10,20,10,20));
-        //--subpanel
-        subPanel  = new JPanel(new GridLayout(3, 2));
-        //--labels
-        label = new JLabel("Welcome to chatting world...");
-        usernameLabel = new JLabel("Your username:");
-        passwordLabel = new JLabel("Your password:");
-        re_enterPassLabel = new JLabel("Your password again:");
-        //--fields
-        usernameField = new JTextField();
-        passwordField = new JPasswordField();
-        rePasswordField = new JPasswordField();
-        //--button
-        submitButton = new JButton("Submit");
+        panel1.setBorder(new EmptyBorder(new Insets(10,10,10,10)));
+        panel1.setPreferredSize(new Dimension(500, 500));
 
-        //add to panel
-        panel.add(label);
-        label.setAlignmentX(Component.CENTER_ALIGNMENT);
-        label.setBorder(new EmptyBorder(new Insets(10,0,10,0)));
-
-        subPanel.add(usernameLabel);
-        subPanel.add(usernameField);
-        subPanel.add(passwordLabel);
-        subPanel.add(passwordField);
-        subPanel.add(re_enterPassLabel);
-        subPanel.add(rePasswordField);
-
-        panel.add(subPanel);
-        panel.add(Box.createRigidArea(new Dimension(0,20)));
-
-        panel.add(submitButton);
-        submitButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        panel.add(Box.createRigidArea(new Dimension(0,20)));
-
-        //add to frame
-        this.add(panel);
+        this.setContentPane(panel1);
         this.pack();
-        this.setSize(new Dimension(400,250));
+
+        submitButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (getUsername().equals("") ||
+                        getPassword().equals("") ||
+                        getPasswordAgain().equals("")){
+                    JOptionPane.showMessageDialog(panel1,"Please fill up all of fields");
+                    return;
+                }
+
+                if (AccountModel.select(getUsername()) != null){
+                    JOptionPane.showMessageDialog(panel1, "This username is exists");
+                    return;
+                }
+
+                if (!getPasswordAgain().equals(getPasswordAgain())){
+                    JOptionPane.showMessageDialog(panel1, "The passwords do not match");
+                    return;
+                }
+
+                Account account = new Account();
+                account.setAccountName(getUsername());
+                account.setAccountPassword(getPassword());
+                try{
+                    AccountModel.insert(account);
+
+                    JOptionPane.showMessageDialog(panel1,"Sign up successfully!");
+
+                    dispose();
+
+                }catch(Exception exception){
+                    throw  exception;
+                }
+            }
+        });
     }
 
-    public void submitButtonListener(ActionListener listener){
-        submitButton.addActionListener(listener);
+    public String getUsername(){
+        return textField1.getText();
     }
 
-    public String getUsernameField(){
-        return usernameField.getText();
+    public String getPassword(){
+        return new String(passwordField1.getPassword());
     }
 
-    public String getPasswordField(){
-        return new String(passwordField.getPassword());
-    }
-
-    public String getRePasswordField(){
-        return new String(rePasswordField.getPassword());
+    public String getPasswordAgain(){
+        return new String(passwordField2.getPassword());
     }
 }

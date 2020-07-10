@@ -1,10 +1,8 @@
 package Server;
 
-import Entities.Account;
 import Models.AccountModel;
-import Utils.ProtectPasswordUtil;
-import Views_ver2.ChatBox;
-import Views_ver2.ChatBoxView;
+import Views.ChatBox;
+import Views.ChatBoxView;
 import org.apache.commons.lang.StringUtils;
 import java.io.*;
 import java.net.Socket;
@@ -105,7 +103,7 @@ public class ServerWorker extends Thread{
         for (ServerWorker worker : workerList){
             if (!login.equals(worker.getLogin())) {
                 //worker.send(onlineMsg);
-                outputStream.write(onlineMsg.getBytes());
+                worker.outputStream.write(onlineMsg.getBytes());
             }
         }
         System.out.println(onlineMsg);
@@ -153,10 +151,11 @@ public class ServerWorker extends Thread{
                 for (ServerWorker worker : workerList){
                     if (!login.equals(worker.getLogin())){
                         //worker.send(onlineMsg);
-
                         worker.outputStream.write(onlineMsg.getBytes());
                     }
                 }
+
+                System.out.println(onlineMsg);
             }
             else{
                 String msg = "error login\n";

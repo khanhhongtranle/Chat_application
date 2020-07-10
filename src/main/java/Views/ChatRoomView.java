@@ -1,87 +1,109 @@
 package Views;
 
-import Entities.Account;
+import Client.Client;
+import Client.UserStatusListener;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
+import java.io.IOException;
+import java.util.ArrayList;
 
-public class ChatRoomView extends JFrame {
-
-    private JPanel panel;
-    private JPanel subPanel;
-    private JLabel label;
-    private JLabel label1;
-    private JLabel label2;
-    private JList listUsers;
+public class ChatRoomView extends JFrame implements UserStatusListener  {
+    private JPanel panel1;
+    private JList<String> list1;
+    private JButton logoutButton;
     private JScrollPane scrollPane;
-    private JButton exitButton;
+    private JPanel panel2;
+    private JPanel panel3;
+    private JLabel hiLabel;
 
-    DefaultListModel<String> listModel = new DefaultListModel<>();
+    private final Client client;
+    private DefaultListModel<String> listModel = new DefaultListModel<>();
 
-    public ChatRoomView(Account account){
-        // set up frame
+    public ChatRoomView(Client client1){
+        this.client = client1;
+        client.addUserStatusListener(this);
+
         this.setTitle("Chat room");
-        this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        this.setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.setResizable(false);
 
-        //init components
-        //--panel
-        panel = new JPanel();
-        BoxLayout boxLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
-        panel.setLayout(boxLayout);
-        //
-        subPanel = new JPanel(new FlowLayout());
-        //--labels
-        label = new JLabel("Chat room");
-        label1 = new JLabel("Hello, " + account.getAccountName());
-        label2 = new JLabel("Online users:");
-        //--button
-        exitButton = new JButton("Exit");
-        //--list
-        /*for(Account acc : Account.list){
-            listModel.addElement(acc.getAccountName());
-        }*/
-        listUsers = new JList(listModel);
-        listUsers.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        listUsers.setLayoutOrientation(JList.VERTICAL_WRAP);
-        listUsers.setVisibleRowCount(-1);
-        scrollPane = new JScrollPane(listUsers);
-        scrollPane.setBounds(100,100, 75,75);
+        panel1.setBorder(new EmptyBorder(new Insets(0,0,0,0)));
+        panel1.setPreferredSize(new Dimension(500, 500));
 
-        //add to panels
-        panel.add(label);
-        label.setAlignmentX(Component.CENTER_ALIGNMENT);
+        list1 = new JList<>();
+        list1.setModel(listModel);
+        scrollPane.setViewportView(list1);
 
-        subPanel.add(label1);
-        subPanel.add(exitButton);
+        hiLabel.setText(hiLabel.getText() + client.getUsername());
 
-        panel.add(subPanel);
-        panel.add(label2);
-        label2.setAlignmentX(Component.CENTER_ALIGNMENT);
-        panel.add(scrollPane);
-        panel.add(Box.createRigidArea(new Dimension(0,30)));
-
-        //add to frame
-        this.add(panel);
+        this.setContentPane(panel1);
         this.pack();
-        this.setSize(new Dimension(300,400));
+
+        list1.addMouseListener(new MouseListener(){
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() > 1){
+                    String sendTo = list1.getSelectedValue();
+                    ChatBoxView chatBoxView = new ChatBoxView(client, sendTo);
+                    chatBoxView.setVisible(true);
+                }
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+
+            }
+        });
+
+        logoutButton.addActionListener(new LogoutListener());
     }
 
-    public void exitButtonListener(ActionListener listener){
-        exitButton.addActionListener(listener);
+    private class LogoutListener implements ActionListener{
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            try{
+                client.logoff();
+                //client.removeUserStatusListener(ChatRoomView.this);
+                dispose();
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            }
+        }
     }
 
-    public void addMouseListener(MouseListener listener){
-        listUsers.addMouseListener(listener);
+
+    @Override
+    public void online(String login) {
+        listModel.addElement(login);
     }
 
-    public JList getListUser(){
-        return listUsers;
+    @Override
+    public void offline(String login) {
+        listModel.removeElement(login);
     }
 
-    public DefaultListModel<String> getListModel(){
-        return listModel;
+    @Override
+    public void clean() {
+        listModel.removeAllElements();
     }
 }

@@ -1,8 +1,4 @@
-import Controllers.ChatBoxController;
-import Controllers.ChatRoomController;
-import Controllers.LoginController;
-import Entities.Account;
-import Views_ver2.LoginView;
+import Views.LoginView;
 
 import java.awt.*;
 

@@ -18,11 +18,20 @@ public class Client {
     private ArrayList<UserStatusListener> userStatusListeners = new ArrayList<>();
     private ArrayList<MessageListener> messageListeners = new ArrayList<>();
 
+    private static ArrayList<String> onlineUser = new ArrayList<>();
+
     private String username;
 
     public Client(String serverName, int serverPort){
         this.serverName = serverName;
         this.serverPort = serverPort;
+
+        if (!connect()){
+            System.out.println("Connect failed");
+        }
+        else{
+            System.out.println("Connect successful");
+        }
     }
 
     public static void main(String[] args) throws IOException {
@@ -34,9 +43,15 @@ public class Client {
                 System.out.println("Online: " + login );
             }
 
+
             @Override
             public void offline(String login) {
                 System.out.println("Offline: " + login);
+            }
+
+            @Override
+            public void clean() {
+
             }
         });
 
@@ -92,6 +107,14 @@ public class Client {
         messageListeners.remove(listener);
     }
 
+    public void removeOnlineUser(String username){
+        onlineUser.remove(username);
+    }
+
+    public void addOnlineUser(String username){
+        onlineUser.add(username);
+    }
+
     public boolean connect() {
         try{
             this.socket = new Socket(serverName, serverPort);
@@ -118,6 +141,7 @@ public class Client {
         if (response.equalsIgnoreCase("ok login")){
             startMessageReader();
             username = login;
+            addOnlineUser(username);
             //handleOnline(username);
             return true;
         }
@@ -185,7 +209,11 @@ public class Client {
         String login = tokens[1];
         for (UserStatusListener listener : userStatusListeners){
             listener.offline(login);
+            //removeUserStatusListener(listener);
+            //tu xoa chinh no ra khoi listen chinh no nen listen cac ben khac ko the xoa
         }
+
+        removeOnlineUser(login);
     }
 
     public void handleMessage(String[] tokensMsg){

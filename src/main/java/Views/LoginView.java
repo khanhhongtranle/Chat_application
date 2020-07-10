@@ -1,84 +1,97 @@
 package Views;
 
+import Client.Client;
+import Entities.Account;
+import Models.AccountModel;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 
-public class LoginView extends JFrame {
+public class LoginView extends JFrame{
+    private JPanel panel1;
+    private JPanel panel2;
+    private JPanel panel3;
+    private JTextField textField1;
+    private JPasswordField passwordField1;
+    private JButton LOGINButton;
+    private JButton signUpButton;
 
-    private JPanel panel;
-    private JPanel subPanel;
-    private JPanel subPanel2;
-    private JLabel label;
-    private JLabel labelUsername;
-    private JLabel labelPassword;
-    private JTextField usernameField;
-    private JPasswordField passwordField;
-    private JButton loginBtn;
-    private JButton signUpBtn;
+    private final Client client;
 
     public LoginView(){
-        //set up frame
-        this.setTitle("Chatting");
+        this.setTitle("Welcome to chatting world");
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.setResizable(false);
 
-        //init components
-        //---panel
-        panel = new JPanel();
-        BoxLayout boxLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
-        panel.setLayout(boxLayout);
-        //--subpanel
-        subPanel = new JPanel(new FlowLayout());
-        subPanel2 = new JPanel(new GridLayout(2, 2));
-        //--labels
-        label = new JLabel("LOGIN");
-        labelUsername = new JLabel("Username:");
-        labelPassword = new JLabel("Password:");
-        //--textfields
-        usernameField = new JTextField();
-        passwordField = new JPasswordField();
-        //--buttons
-        loginBtn = new JButton("Login");
-        signUpBtn = new JButton("Sign Up");
+        panel1.setBorder(new EmptyBorder(new Insets(0,0,0,10)));
+        panel1.setPreferredSize(new Dimension(500, 300));
 
-        //add to panel
-        panel.add(label);
-        label.setBorder(new EmptyBorder(new Insets(10,0,10,0)));
-        label.setAlignmentX(Component.CENTER_ALIGNMENT);
-        subPanel2.add(labelUsername);
-        subPanel2.add(usernameField);
-        subPanel2.add(labelPassword);
-        subPanel2.add(passwordField);
-        panel.add(Box.createRigidArea(new Dimension(10,20)));
-        panel.add(subPanel2);
-        subPanel.add(loginBtn);
-        subPanel.add(signUpBtn);
-        panel.add(Box.createRigidArea(new Dimension(10,20)));
-        panel.add(subPanel);
-        panel.add(Box.createRigidArea(new Dimension(0,20)));
-        panel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        //add to frame
-        this.add(panel);
+        this.setContentPane(panel1);
         this.pack();
-        this.setSize(300,200);
+
+        LOGINButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (getUsername().equals("") || getPassword().equals("")){
+                    JOptionPane.showMessageDialog(panel1,"Username or password must been fill");
+                    return;
+                }
+                doLogin();
+            }
+        });
+
+        signUpButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                SignUpView signUpView = new SignUpView();
+                signUpView.setVisible(true);
+            }
+        });
+
+        //
+        client = new Client("localhost",7070);
+        //auto call connect() function
     }
 
-    public void loginButtonListener(ActionListener listener){
-        loginBtn.addActionListener(listener);
+
+
+    public static void main(String[] args){
+        EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                LoginView loginView = new LoginView();
+                loginView.setVisible(true);
+            }
+        });
     }
 
-    public void signUpButtonListener(ActionListener listener){
-        signUpBtn.addActionListener(listener);
+    public String getUsername(){
+        return textField1.getText();
     }
 
-    public String getUsernameField(){
-        return usernameField.getText();
+    public String getPassword(){
+        return new String (passwordField1.getPassword());
     }
 
-    public String getPasswordField(){
-        return new String(passwordField.getPassword());
+    protected void doLogin(){
+        String user = this.getUsername();
+        String pass = this.getPassword();
+
+        try{
+            if (client.login(user,pass)){
+                ChatRoomView chatRoomView = new ChatRoomView(client);
+                chatRoomView.setVisible(true);
+                this.dispose();
+            }
+            else{
+                JOptionPane.showMessageDialog(panel1,"Username or password is incorrect");
+                return;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

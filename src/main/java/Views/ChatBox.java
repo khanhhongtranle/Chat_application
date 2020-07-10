@@ -1,4 +1,4 @@
-package Views_ver2;
+package Views;
 
 public class ChatBox {
     protected String sender;
